@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F.O.C.U.S. MMM - Options Cone Simulator</title>
+<meta name="description" content="Expected-move cone simulator for Cash-Secured Puts, Covered Calls, Buy Calls and Buy Puts - every number with its worked math. Jachbit 2026.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="mmm-math.js"></script>
+<style>
+:root {
+  --navy: #002b5c;
+  --orange: #e65c00;
+  --orange-hi: #ff8a3d;
+  --white: #ffffff;
+  --text: #e8e8e8;
+  --bg: #0d1117;
+  --card: #0f1b2d;
+  --card2: #13233a;
+  --border: #1e3a5f;
+  --accent: #3b82f6;
+  --yellow: #fbbf24;
+  --bluegrey: #93c5fd;
+  --green: #22c55e;
+  --red: #f87171;
+  --cyan: #22d3ee;
+  --magenta: #f0abfc;
+  --earn: #b5e655;
+  --now: #add8e6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--white); font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.35; }
+a { color: var(--orange-hi); }
+
+/* header: standard 3 columns */
+header {
+  background: linear-gradient(135deg, var(--navy) 0%, #001a3a 100%);
+  border-bottom: 3px solid var(--orange);
+  padding: 14px 24px;
+  display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 16px; align-items: center;
+}
+.h-left h1 { font-size: 24px; font-weight: 700; letter-spacing: .5px; }
+.h-left h1 sup { font-size: 13px; }
+.h-left .sub { font-size: 15px; color: var(--yellow); font-weight: 700; margin-top: 4px; }
+.h-left .copy { font-size: 12px; color: var(--white); margin-top: 5px; }
+.h-left .copy a { color: var(--orange-hi); font-weight: 700; font-size: 13px; text-decoration: none; }
+.h-mid { text-align: center; }
+.h-mid .warn { color: var(--yellow); font-size: 18px; font-weight: 700; letter-spacing: .5px; }
+.h-mid .warn2 { color: var(--yellow); font-size: 13px; font-weight: 700; margin-top: 4px; }
+.h-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.h-right .brand { color: var(--orange-hi); font-weight: 700; font-size: 14px; }
+#hdrClock { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 2px; line-height: 1; }
+.h-right .date { font-size: 13px; color: var(--bluegrey); font-weight: 700; }
+.h-right .date b { color: var(--orange-hi); }
+#visitorsWrap { font-size: 13px; color: var(--white); font-weight: 700; display: none; }
+.verse { background: #071020; color: var(--white); text-align: center; font-size: 13px; font-weight: 700; padding: 6px 12px; border-bottom: 1px solid var(--border); }
+
+/* toolbar */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 24px; background: #0a1628; border-bottom: 2px solid var(--border); }
+.strat { display: flex; flex-wrap: wrap; gap: 8px; }
+.strat button { font-size: 17px; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: 2px solid var(--white); background: var(--navy); color: var(--white); cursor: pointer; }
+.strat button.on { background: var(--orange); border-color: var(--orange); }
+.tb-sep { flex: 1; }
+.btn { font-size: 15px; font-weight: 700; padding: 9px 14px; border-radius: 7px; border: 2px solid var(--white); background: var(--navy); color: var(--white); cursor: pointer; white-space: nowrap; }
+.btn:hover, .strat button:hover { filter: brightness(1.2); }
+.btn.orange { background: var(--orange); border-color: var(--orange); }
+.btn.small { font-size: 13px; padding: 5px 10px; }
+.btn.red { border-color: var(--red); color: var(--white); background: #5b1717; }
+
+/* layout */
+.main { display: grid; grid-template-columns: 430px minmax(0, 1fr); gap: 16px; padding: 16px 24px; align-items: start; }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.panel + .panel { margin-top: 14px; }
+.panel h2 { font-size: 16px; color: var(--orange-hi); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld.full { grid-column: 1 / -1; }
+.fld label { font-size: 14px; font-weight: 700; color: var(--white); }
+.fld .hint { font-size: 12px; font-weight: 700; color: var(--bluegrey); }
+input, select { font-size: 17px; font-weight: 700; padding: 8px 9px; background: #06101f; color: var(--white); border: 2px solid #3d5a80; border-radius: 6px; width: 100%; min-width: 0; font-family: inherit; }
+input:focus, select:focus { outline: none; border-color: var(--orange); }
+input[type=date] { color-scheme: dark; }
+.row { display: flex; gap: 8px; align-items: stretch; }
+.row > * { min-width: 0; }
+.row select { flex: 0 0 auto; width: auto; }
+#priceStatus { font-size: 13px; font-weight: 700; color: var(--yellow); min-height: 18px; }
+.sec-note { font-size: 13px; font-weight: 700; color: var(--bluegrey); margin: -4px 0 8px; }
+.hide { display: none !important; }
+
+/* chart */
+.chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.chart-wrap h2 { font-size: 16px; color: var(--orange-hi); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin: 2px 4px 8px; }
+#cone { width: 100%; height: 440px; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; font-weight: 700; margin: 8px 4px 2px; }
+.legend span::before { content: ''; display: inline-block; width: 18px; height: 4px; margin-right: 6px; vertical-align: middle; background: currentColor; }
+
+/* banners */
+.banners { margin-top: 14px; }
+.sec-title { font-size: 15px; font-weight: 700; color: var(--orange-hi); text-transform: uppercase; letter-spacing: .6px; margin: 14px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.banner { background: var(--card2); border: 1px solid var(--border); border-left: 6px solid currentColor; border-radius: 8px; padding: 9px 12px; margin-bottom: 7px; overflow-wrap: anywhere; word-break: break-word; }
+.banner .head { font-size: 17px; font-weight: 700; color: currentColor; white-space: normal; }
+.banner .math { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 3px; white-space: normal; }
+.c-orange { color: var(--orange-hi); } .c-yellow { color: var(--yellow); } .c-white { color: var(--white); }
+.c-amber { color: var(--yellow); } .c-green { color: var(--green); } .c-red { color: var(--red); }
+.c-cyan { color: var(--cyan); } .c-magenta { color: var(--magenta); } .c-earn { color: var(--earn); }
+.c-now { color: var(--now); } .c-up { color: var(--green); } .c-down { color: var(--red); }
+
+/* saved plays */
+.plays { display: flex; flex-direction: column; gap: 8px; }
+.play { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.play .pn { font-size: 15px; font-weight: 700; color: var(--white); overflow-wrap: anywhere; }
+.play .pd { font-size: 13px; font-weight: 700; color: var(--bluegrey); margin: 2px 0 6px; overflow-wrap: anywhere; }
+.play .pb { display: flex; gap: 8px; flex-wrap: wrap; }
+.empty { font-size: 14px; font-weight: 700; color: var(--white); }
+
+footer { border-top: 2px solid var(--border); padding: 12px 24px 18px; text-align: center; font-size: 13px; font-weight: 700; color: var(--white); }
+footer .f1 { margin-bottom: 6px; }
+footer a { color: var(--orange-hi); font-weight: 700; text-decoration: none; }
+
+@media (max-width: 1100px) {
+  header { grid-template-columns: 1fr; text-align: center; }
+  .h-right { align-items: center; text-align: center; }
+  .main { grid-template-columns: 1fr; padding: 12px 16px; }
+  .toolbar { padding: 10px 16px; }
+}
+@media (max-width: 520px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .strat button { font-size: 15px; padding: 9px 12px; }
+  #cone { height: 360px; }
+  header { padding: 12px 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-left">
+    <h1>F.O.C.U.S.<sup>&copy;</sup> &mdash; MMM Options Cone Simulator</h1>
+    <div class="sub">Expected-move cone for CSP &bull; CC &bull; Buy Call &bull; Buy Put &mdash; every number shows its math</div>
+    <div class="copy">&copy; 2026 Jachbit. All rights reserved. May not be shared without consent of the publisher. &bull;
+      <a href="https://linktr.ee/jachbit" target="_blank" rel="noopener">linktr.ee/jachbit</a></div>
+  </div>
+  <div class="h-mid">
+    <div class="warn">&#9888; Disclaimer: TRADING IS RISKY!</div>
+    <div class="warn2">For personal research only and not financial advice.</div>
+  </div>
+  <div class="h-right">
+    <div class="brand">Jachbit 2026</div>
+    <div id="hdrClock">00:00:00</div>
+    <div class="date"><span id="hdrDate"></span> &nbsp;|&nbsp; <b>ET</b></div>
+    <div id="visitorsWrap">&#128065; <span id="visitorCount">&mdash;</span> visitors</div>
+  </div>
+</header>
+<div class="verse">&#10013; John 3:16 &nbsp;|&nbsp; 1 John 3:16 &nbsp;|&nbsp; Matt 6:33 &nbsp;|&nbsp; Jer 33:3 &nbsp;|&nbsp; Prov 3:5-6 &nbsp;|&nbsp; Prov 27:17</div>
+
+<div class="toolbar">
+  <div class="strat" id="stratBtns">
+    <button data-s="csp">Cash-Secured Put</button>
+    <button data-s="cc">Covered Call</button>
+    <button data-s="bc">Buy Call</button>
+    <button data-s="bp">Buy Put</button>
+  </div>
+  <div class="tb-sep"></div>
+  <select id="exampleSel" style="width:auto;font-size:15px;">
+    <option value="">Load an example...</option>
+    <option value="nvda_csp">NVDA CSP 150 put (11/10 to 12/24)</option>
+    <option value="nvda_cc">NVDA CC 200 call, NOW on 11/12</option>
+    <option value="goog_bc">GOOG Buy Call 280 (11/16 to 1/15/2027)</option>
+  </select>
+  <button class="btn" id="btnSave">Save play</button>
+  <button class="btn orange" id="btnPdf">PDF report</button>
+</div>
+
+<div class="main">
+  <div>
+    <div class="panel">
+      <h2>Stock &amp; dates</h2>
+      <div class="grid2">
+        <div class="fld">
+          <label for="ticker">Ticker</label>
+          <input id="ticker" autocomplete="off" spellcheck="false" style="text-transform:uppercase">
+        </div>
+        <div class="fld">
+          <label>&nbsp;</label>
+          <button class="btn" id="btnPrice" type="button">Get price (Yahoo)</button>
+        </div>
+        <div class="fld full"><div id="priceStatus"></div></div>
+        <div class="fld">
+          <label for="start">Start date</label>
+          <input id="start" type="date">
+        </div>
+        <div class="fld">
+          <label for="price">Start price</label>
+          <input id="price" inputmode="decimal" placeholder="close on the start date">
+        </div>
+        <div class="fld">
+          <label for="target" id="targetLbl">Expiry / target date</label>
+          <input id="target" type="date">
+        </div>
+        <div class="fld">
+          <label for="iv">IV %</label>
+          <input id="iv" inputmode="decimal" placeholder="e.g. 59.7">
+        </div>
+        <div class="fld full"><div class="hint">IV: type the expiry's IV from the option chain (tastytrade IVX / TOS chain header).</div></div>
+        <div class="fld">
+          <label for="basis">Day basis</label>
+          <select id="basis">
+            <option value="cal365">calendar DTE / 365</option>
+            <option value="td252">trading days / 252</option>
+            <option value="td365">trading days / 365 (original)</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label for="emFactor">EM factor</label>
+          <input id="emFactor" inputmode="decimal" placeholder="1">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 id="optTitle">The option</h2>
+      <div class="grid2">
+        <div class="fld">
+          <label for="strike" id="strikeLbl">Strike</label>
+          <input id="strike" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="premium" id="premLbl">Premium per share</label>
+          <input id="premium" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="contracts">Contracts</label>
+          <input id="contracts" inputmode="numeric" placeholder="1">
+        </div>
+        <div class="fld only-cc">
+          <label for="ccBasis">CC cost basis / share</label>
+          <input id="ccBasis" inputmode="decimal" placeholder="blank = start price">
+        </div>
+        <div class="fld only-buy">
+          <label for="expiry">Option expiry</label>
+          <input id="expiry" type="date">
+          <div class="hint">only if later than the target date</div>
+        </div>
+        <div class="fld full">
+          <label for="tpVal" id="tpLbl">Take profit</label>
+          <div class="row">
+            <select id="tpMode"><option value="pct">% of premium</option><option value="usd">$ total</option></select>
+            <input id="tpVal" inputmode="decimal" placeholder="0 = off">
+          </div>
+        </div>
+        <div class="fld full only-buy">
+          <label for="slVal">Stop loss</label>
+          <div class="row">
+            <select id="slMode"><option value="pct">% of premium</option><option value="usd">$ total</option></select>
+            <input id="slVal" inputmode="decimal" placeholder="0 = off">
+          </div>
+        </div>
+        <div class="fld">
+          <label for="earnings">Earnings date</label>
+          <input id="earnings" type="date">
+        </div>
+        <div class="fld">
+          <label for="earnTime">Earnings time</label>
+          <select id="earnTime"><option value="">not known</option><option value="bmo">before open</option><option value="amc">after close</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Today / live P/L (optional)</h2>
+      <div class="sec-note">NOW banners show while today is after the start and before the target. P/L uses the mark; else (bid + ask) / 2 when both are above 0; else the last trade.</div>
+      <div class="grid2">
+        <div class="fld">
+          <label for="todayDate">Today's date</label>
+          <input id="todayDate" type="date">
+          <div class="hint">blank = today (ET)</div>
+        </div>
+        <div class="fld">
+          <label for="todayPrice">Today's stock price</label>
+          <input id="todayPrice" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="ivNow">IV now %</label>
+          <input id="ivNow" inputmode="decimal" placeholder="blank = IV above">
+        </div>
+        <div class="fld">
+          <label for="mark">Option mark</label>
+          <input id="mark" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="bid">Option bid</label>
+          <input id="bid" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="ask">Option ask</label>
+          <input id="ask" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="last">Option last</label>
+          <input id="last" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label>&nbsp;</label>
+          <button class="btn" id="btnClearLive" type="button">Clear today / P/L</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Saved plays</h2>
+      <div class="sec-note">Kept in this browser only. CSV export to share or keep a copy.</div>
+      <div class="row" style="margin-bottom:10px;flex-wrap:wrap;">
+        <button class="btn small" id="btnCsv" type="button">Export CSV</button>
+      </div>
+      <div class="plays" id="plays"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="chart-wrap">
+      <h2 id="chartTitle">Expected-move cone</h2>
+      <canvas id="cone"></canvas>
+      <div class="legend">
+        <span style="color:var(--yellow)">1 x EM cone</span>
+        <span style="color:var(--green)">EM High</span>
+        <span style="color:var(--red)">EM Low</span>
+        <span style="color:var(--magenta)">strike</span>
+        <span style="color:var(--cyan)">break-even</span>
+        <span style="color:var(--white)">start price</span>
+        <span style="color:var(--earn)">earnings</span>
+        <span style="color:var(--now)">today</span>
+      </div>
+    </div>
+    <div class="banners" id="banners"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="f1">F.O.C.U.S.&copy; &bull; MMM Options Cone Simulator &bull; Jachbit 2026 &bull; Research tool, not advice. Lognormal, no drift; option values Black-Scholes, no rates or dividends.</div>
+  <div>&copy; 2026 Jachbit. All rights reserved. May not be copied or shared without express written consent of the publisher. &bull;
+    <a href="https://linktr.ee/jachbit" target="_blank" rel="noopener">linktr.ee/jachbit</a></div>
+</footer>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const FIELDS = ['ticker', 'price', 'iv', 'start', 'target', 'basis', 'emFactor', 'strike', 'premium', 'contracts', 'ccBasis', 'expiry',
+  'tpMode', 'tpVal', 'slMode', 'slVal', 'earnings', 'earnTime', 'todayDate', 'todayPrice', 'ivNow', 'mark', 'bid', 'ask', 'last'];
+const SEC_ORDER = ['Play', 'Expected move', 'Strike', 'Premium', 'Value', 'Today', 'Exit', 'Earnings & IV', 'NOW', 'Live P/L'];
+const LS_CUR = 'focus_mmm_web_current_v1', LS_PLAYS = 'focus_mmm_web_plays_v1';
+let strat = 'csp';
+let last = null;
+
+const EXAMPLES = {
+  nvda_csp: { strat: 'csp', ticker: 'NVDA', price: '168.89', iv: '59.7', start: '2026-11-10', target: '2026-12-24', basis: 'cal365', strike: '150', premium: '6.3233', contracts: '1', tpMode: 'pct', tpVal: '50', todayDate: '2026-11-10' },
+  nvda_cc: { strat: 'cc', ticker: 'NVDA', price: '168.89', iv: '59.7', start: '2026-11-10', target: '2026-12-24', basis: 'cal365', strike: '200', premium: '3.50', contracts: '1', ccBasis: '198.75', tpMode: 'pct', tpVal: '50', todayDate: '2026-11-12', todayPrice: '166.19' },
+  goog_bc: { strat: 'bc', ticker: 'GOOG', price: '281.26', iv: '36.4', start: '2026-11-16', target: '2027-01-15', basis: 'cal365', strike: '280', premium: '18.50', contracts: '1', tpMode: 'pct', tpVal: '50', slMode: 'pct', slVal: '50', todayDate: '2026-11-16', mark: '17.45', bid: '16.90' }
+};
+
+// ---------- storage (per-browser convenience; never required) ----------
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+
+function readInputs() {
+  const o = { strat: strat };
+  FIELDS.forEach(f => { o[f] = $(f).value.trim(); });
+  o.ticker = o.ticker.toUpperCase();
+  return o;
+}
+function writeInputs(o) {
+  FIELDS.forEach(f => {
+    const el = $(f);
+    if (el.tagName === 'SELECT') el.value = o[f] || el.options[0].value;
+    else el.value = o[f] != null ? o[f] : '';
+  });
+  setStrat(o.strat || 'csp', true);
+}
+function toCompute(o) {
+  return Object.assign({}, o, {
+    tpPct: o.tpMode === 'pct' ? o.tpVal : '', tpUsd: o.tpMode === 'usd' ? o.tpVal : '',
+    slPct: o.slMode === 'pct' ? o.slVal : '', slUsd: o.slMode === 'usd' ? o.slVal : ''
+  });
+}
+
+function setStrat(s, silent) {
+  strat = s;
+  document.querySelectorAll('#stratBtns button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+  const st = MMM.STRATS[s];
+  document.querySelectorAll('.only-cc').forEach(e => e.classList.toggle('hide', s !== 'cc'));
+  document.querySelectorAll('.only-buy').forEach(e => e.classList.toggle('hide', !st.buy));
+  $('optTitle').textContent = 'The option - ' + st.long;
+  $('strikeLbl').textContent = 'Strike (' + (st.isPut ? 'put' : 'call') + ')';
+  $('premLbl').textContent = st.buy ? 'Premium PAID / share' : 'Premium received / share';
+  $('tpLbl').textContent = st.buy ? 'Take profit (sell when the option gains)' : 'Take profit (buy back)';
+  $('targetLbl').textContent = st.buy ? 'Target date (= expiry)' : 'Expiry / target date';
+  if (!silent) update();
+}
+
+// ---------- render ----------
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function update() {
+  const inp = readInputs();
+  lsSet(LS_CUR, inp);
+  const o = MMM.compute(toCompute(inp));
+  last = { inp: inp, o: o };
+  const bySec = {};
+  o.banners.forEach(b => { (bySec[b.sec] = bySec[b.sec] || []).push(b); });
+  let h = '';
+  SEC_ORDER.forEach(sec => {
+    if (!bySec[sec]) return;
+    if (sec !== 'Play') h += '<div class="sec-title">' + esc(sec) + '</div>';
+    bySec[sec].forEach(b => {
+      h += '<div class="banner c-' + b.cls + '"><div class="head">' + esc(b.head) + '</div>' +
+        b.math.map(m => '<div class="math">' + esc(m) + '</div>').join('') + '</div>';
+    });
+  });
+  $('banners').innerHTML = h;
+  $('chartTitle').textContent = 'Expected-move cone' + (inp.ticker ? ' - ' + inp.ticker : '') + ' ' + MMM.STRATS[strat].long + (o.ok && o.K > 0 ? ' ' + MMM.P(o.K) : '');
+  drawCone($('cone'), o, 'dark');
+}
+
+// ---------- cone chart ----------
+const THEMES = {
+  dark: { bg: '#0f1b2d', grid: '#1e3a5f', text: '#ffffff', cone: '#fbbf24', coneFill: 'rgba(251,191,36,0.10)', start: '#ffffff', hi: '#22c55e', lo: '#f87171', strike: '#f0abfc', be: '#22d3ee', target: '#fbbf24', earn: '#b5e655', reach: '#ffffff', now: '#add8e6', tp: '#22d3ee' },
+  pdf: { bg: '#ffffff', grid: '#d9d9d9', text: '#111111', cone: '#b7791f', coneFill: 'rgba(183,121,31,0.08)', start: '#444444', hi: '#15803d', lo: '#b91c1c', strike: '#a21caf', be: '#0e7490', target: '#b7791f', earn: '#4d7c0f', reach: '#111111', now: '#1d4ed8', tp: '#0e7490' }
+};
+function drawCone(cv, o, themeName, fixedW, fixedH) {
+  const T = THEMES[themeName];
+  const dpr = fixedW ? 2 : (window.devicePixelRatio || 1);
+  const W = fixedW || cv.clientWidth || 800, H = fixedH || cv.clientHeight || 440;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = T.bg; ctx.fillRect(0, 0, W, H);
+  ctx.font = 'bold 14px Arial';
+  if (!o.ok) {
+    ctx.fillStyle = T.text; ctx.fillText('Type the start price, IV, start date and a later target date to draw the cone.', 16, 34);
+    return;
+  }
+  const narrow = W < 560;
+  const fs = narrow ? 12 : 13;
+  const padL = narrow ? 48 : 62, padR = narrow ? 104 : 150, padT = 30, padB = 34;
+  const span = o.t - o.s;
+  let dEnd = o.t + Math.max(3, Math.round(span * 0.15));
+  if (Number.isFinite(o.reachDate) && o.reachDate > o.t && o.reachDate <= o.t + span * 0.6) dEnd = Math.max(dEnd, o.reachDate + 2);
+  if (Number.isFinite(o.earn) && o.earn > o.t && o.earn <= o.t + span * 0.6) dEnd = Math.max(dEnd, o.earn + 2);
+  const dStart = o.s - Math.max(2, Math.round(span * 0.04));
+  const emEnd = MMM.coneEM(o, dEnd);
+  const ys = [o.S + emEnd, o.S - emEnd, o.hiT, o.loT];
+  if (o.K > 0) ys.push(o.K);
+  if (Number.isFinite(o.be)) ys.push(o.be);
+  if (o.nowOn) ys.push(o.pNow);
+  let yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+  const yp = (yMax - yMin) * 0.06 || 1; yMin -= yp; yMax += yp;
+  const X = d => padL + (d - dStart) / (dEnd - dStart) * (W - padL - padR);
+  const Y = p => padT + (yMax - p) / (yMax - yMin) * (H - padT - padB);
+
+  // grid + price axis
+  const step = niceStep((yMax - yMin) / 7);
+  ctx.lineWidth = 1; ctx.font = 'bold ' + fs + 'px Arial'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let p = Math.ceil(yMin / step) * step; p <= yMax; p += step) {
+    ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(padL, Y(p)); ctx.lineTo(W - padR, Y(p)); ctx.stroke();
+    ctx.fillStyle = T.text; ctx.fillText(fmtAxis(p, step), padL - 6, Y(p));
+  }
+  // date axis: Mondays (or month starts on long spans)
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const totalDays = dEnd - dStart;
+  const every = totalDays > 400 ? 'month' : totalDays > 120 ? 2 : 1;
+  let wk = 0, lastX = -999;
+  for (let d = dStart; d <= dEnd; d++) {
+    const ymd = MMM.iso(d);
+    let tick = false;
+    if (every === 'month') tick = ymd.endsWith('-01');
+    else if (MMM.dow(d) === 1) { tick = wk % every === 0; wk++; }
+    if (!tick) continue;
+    const x = X(d);
+    ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, H - padB); ctx.stroke();
+    if (x - lastX > (narrow ? 34 : 40)) { ctx.fillStyle = T.text; ctx.fillText(MMM.md(d), x, H - padB + 6); lastX = x; }
+  }
+
+  // cone (trading days, like chart bars)
+  const up = [], dn = [];
+  for (let d = o.s; d <= dEnd; d++) {
+    if (d !== o.s && !MMM.isTrading(d)) continue;
+    const em = MMM.coneEM(o, d);
+    up.push([X(d), Y(o.S + em)]); dn.push([X(d), Y(o.S - em)]);
+  }
+  ctx.fillStyle = T.coneFill; ctx.beginPath();
+  up.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+  for (let i = dn.length - 1; i >= 0; i--) ctx.lineTo(dn[i][0], dn[i][1]);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = T.cone; ctx.lineWidth = 2.5;
+  [up, dn].forEach(arr => { ctx.beginPath(); arr.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); });
+
+  const labels = [];
+  function hline(p, color, dash, width, text) {
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(X(o.s), Y(p)); ctx.lineTo(W - padR, Y(p)); ctx.stroke(); ctx.setLineDash([]);
+    labels.push({ y: Y(p), color: color, text: text });
+  }
+  hline(o.S, T.start, [3, 4], 1.5, 'start ' + MMM.P(o.S));
+  hline(o.hiT, T.hi, [9, 6], 2, 'EM High ' + MMM.P(MMM.roundHalf(o.hiT, 2)));
+  hline(o.loT, T.lo, [9, 6], 2, 'EM Low ' + MMM.P(MMM.roundHalf(o.loT, 2)));
+  if (o.K > 0) hline(o.K, T.strike, [], 2.5, 'strike ' + MMM.P(o.K));
+  if (Number.isFinite(o.be)) hline(o.be, T.be, [4, 4], 2, 'BE ' + MMM.P(MMM.roundHalf(o.be, 2)));
+
+  // verticals: target, earnings
+  function vline(d, color, text, row) {
+    const x = X(d);
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, H - padB); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = 'bold ' + fs + 'px Arial'; ctx.fillStyle = color; ctx.textBaseline = 'top';
+    const w = ctx.measureText(text).width;
+    ctx.textAlign = x + 4 + w > W - 4 ? 'right' : 'left';
+    ctx.fillText(text, ctx.textAlign === 'right' ? x - 4 : x + 4, 6 + row * (fs + 3));
+  }
+  vline(o.t, T.target, 'target ' + MMM.md(o.t) + ' (' + o.calDays + ' DTE)', 0);
+  if (Number.isFinite(o.earn) && o.earn >= dStart && o.earn <= dEnd) vline(o.earn, T.earn, 'EARNINGS ' + MMM.md(o.earn), 1);
+
+  // reach marker
+  if (Number.isFinite(o.reachDate) && o.reachDate <= dEnd) {
+    const x = X(o.reachDate), y = Y(o.K);
+    ctx.fillStyle = T.reach; ctx.strokeStyle = T.strike; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.font = 'bold ' + fs + 'px Arial'; ctx.textBaseline = 'middle';
+    const txt = '1 EM reach ' + MMM.md(o.reachDate) + '  touch ~' + MMM.R(o.rTouch * 100, 0) + '%';
+    const above = o.st.isPut ? -1 : 1;
+    const ty = y + above * -(fs + 6);
+    const w = ctx.measureText(txt).width;
+    const right = x + 10 + w > W - padR;
+    const lx = Math.max(6, Math.min(right ? x - 10 - w : x + 10, W - 6 - w));
+    boxText(ctx, txt, lx, Math.max(padT + 8, Math.min(H - padB - 8, ty)), w, fs, T.reach, T.bg, T.strike);
+  }
+  // today marker
+  if (o.nowOn) {
+    const x = X(o.today), y = Y(o.pNow);
+    ctx.fillStyle = T.now; ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold ' + fs + 'px Arial'; ctx.textBaseline = 'middle';
+    const txt = 'today ' + MMM.md(o.today) + ' ' + MMM.P(o.pNow);
+    boxText(ctx, txt, x + 10, y - fs - 4, ctx.measureText(txt).width, fs, T.now, T.bg, T.now);
+  }
+  // start dot
+  ctx.fillStyle = T.cone; ctx.beginPath(); ctx.arc(X(o.s), Y(o.S), 5, 0, Math.PI * 2); ctx.fill();
+
+  // right-edge labels, pushed apart so none overlap
+  labels.sort((a, b) => a.y - b.y);
+  const gap = fs + 5;
+  for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < gap) labels[i].y = labels[i - 1].y + gap;
+  const over = labels.length ? labels[labels.length - 1].y - (H - 6) : 0;
+  if (over > 0) labels.forEach(l => { l.y -= over; });
+  for (let i = labels.length - 2; i >= 0; i--) if (labels[i + 1].y - labels[i].y < gap) labels[i].y = labels[i + 1].y - gap;
+  ctx.font = 'bold ' + fs + 'px Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  labels.forEach(l => { ctx.fillStyle = l.color; ctx.fillText(l.text, W - padR + 6, l.y); });
+}
+// label on a solid box so cone / grid lines never run through the text
+function boxText(ctx, txt, x, y, w, fs, color, bg, border) {
+  ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.rect(x - 5, y - fs / 2 - 4, w + 10, fs + 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, x, y);
+}
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / p;
+  return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * p;
+}
+function fmtAxis(v, step) { return step >= 1 ? v.toFixed(0) : v.toFixed(step >= 0.1 ? 1 : 2); }
+
+// ---------- Yahoo price (browser-side v8 chart API, same method as FOCUS Stocks Banner) ----------
+async function yahooChart(sym, query) {
+  const path = '/v8/finance/chart/' + encodeURIComponent(sym) + '?' + query;
+  const urls = ['https://fsb-proxy.jachcomm.workers.dev' + path,
+    'https://corsproxy.io/?url=' + encodeURIComponent('https://query1.finance.yahoo.com' + path)];
+  for (const url of urls) {
+    try {
+      const ctrl = new AbortController();
+      const tm = setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal }).finally(() => clearTimeout(tm));
+      if (!r.ok) continue;
+      const j = await r.json();
+      const res = j && j.chart && j.chart.result && j.chart.result[0];
+      if (res && res.meta) return res;
+    } catch (e) { /* next url */ }
+  }
+  return null;
+}
+function etDate(sec) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(sec * 1000));
+}
+async function getPrice() {
+  const sym = $('ticker').value.trim().toUpperCase();
+  if (!sym) { $('priceStatus').textContent = 'Type a ticker first.'; return; }
+  $('priceStatus').textContent = 'Getting ' + sym + ' from Yahoo...';
+  const res = await yahooChart(sym, 'interval=1d&range=6mo');
+  if (!res) { $('priceStatus').textContent = 'No price from Yahoo for ' + sym + ' - type the price in.'; return; }
+  const m = res.meta;
+  const live = m.regularMarketPrice;
+  const today = MMM.iso(MMM.todayET());
+  const start = $('start').value;
+  let msg = sym + ' ' + MMM.P(live) + ' (Yahoo, ' + (m.regularMarketTime ? new Date(m.regularMarketTime * 1000).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET' : 'latest') + ')';
+  if (!start || start >= today) {
+    $('price').value = MMM.P(live);
+    if (!start) $('start').value = today;
+    msg += ' -> start price';
+  } else {
+    const ts = res.timestamp || [], cl = (res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close) || [];
+    let found = NaN;
+    for (let i = 0; i < ts.length; i++) if (etDate(ts[i]) === start && Number.isFinite(cl[i])) found = cl[i];
+    if (Number.isFinite(found)) { $('price').value = MMM.P(MMM.roundHalf(found, 2)); msg += ';  close on ' + start + ' ' + MMM.P(MMM.roundHalf(found, 2)) + ' -> start price'; }
+    else msg += ';  no Yahoo close for ' + start + ' (not a trading day?) - start price left as is';
+    $('todayPrice').value = MMM.P(live);
+    msg += ';  ' + MMM.P(live) + ' -> today\'s price';
+  }
+  $('priceStatus').textContent = msg;
+  update();
+}
+
+// ---------- saved plays ----------
+function playName(i) {
+  const st = MMM.STRATS[i.strat];
+  const t = MMM.parseDate(i.target);
+  return (i.ticker || '?') + ' ' + st.name + ' ' + (i.strike || '?') + (st.isPut ? 'P' : 'C') + (Number.isFinite(t) ? ' ' + MMM.mdy(t) : '');
+}
+function renderPlays() {
+  const plays = lsGet(LS_PLAYS, []);
+  if (!plays.length) { $('plays').innerHTML = '<div class="empty">No saved plays yet - set up a play and press Save play.</div>'; return; }
+  $('plays').innerHTML = plays.map((p, i) => {
+    const o = MMM.compute(toCompute(p.inputs));
+    const stats = o.ok ? 'EM ' + MMM.P(MMM.roundHalf(o.emT, 2)) + (Number.isFinite(o.be) ? '  BE ' + MMM.P(MMM.roundHalf(o.be, 2)) : '') + (Number.isFinite(o.pProfit) ? '  profit ~' + MMM.R(o.pProfit * 100, 0) + '%' : '') : 'incomplete';
+    return '<div class="play"><div class="pn">' + esc(p.name) + '</div><div class="pd">saved ' + esc(p.saved) + ' &bull; ' + esc(stats) + '</div>' +
+      '<div class="pb"><button class="btn small" data-load="' + i + '">Load</button><button class="btn small red" data-del="' + i + '">Delete</button></div></div>';
+  }).join('');
+}
+function savePlay() {
+  const inp = readInputs();
+  const name = prompt('Name this play:', playName(inp));
+  if (name === null) return;
+  const plays = lsGet(LS_PLAYS, []);
+  plays.unshift({ name: name.trim() || playName(inp), saved: new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET', inputs: inp });
+  if (!lsSet(LS_PLAYS, plays)) alert('This browser blocked saving (private window?). Use Export CSV to keep a copy.');
+  renderPlays();
+}
+function stamp() {
+  const p = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).formatToParts(new Date());
+  const g = t => p.find(x => x.type === t).value;
+  return g('year') + g('month') + g('day') + '_' + g('hour').replace('24', '00') + g('minute') + g('second');
+}
+function exportCsv() {
+  const plays = lsGet(LS_PLAYS, []);
+  const list = plays.length ? plays : [{ name: playName(readInputs()) + ' (current)', saved: '', inputs: readInputs() }];
+  const head = ['Name', 'Saved', 'Strategy', 'Ticker', 'Start', 'Start Price', 'Target', 'IV %', 'Day Basis', 'EM Factor', 'Strike', 'Premium', 'Contracts', 'CC Cost Basis', 'Option Expiry',
+    'TP Mode', 'TP', 'SL Mode', 'SL', 'Earnings', 'Earnings Time', 'Today', 'Today Price', 'IV Now %', 'Mark', 'Bid', 'Ask', 'Last',
+    'DTE', 'Trading Days', 'EM', 'EM High', 'EM Low', 'Strike x EM', 'Chance ITM %', 'Touch %', 'Reach Date', 'Break-even', 'Chance of Profit %', 'Live P/L $'];
+  const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const rows = [head.join(',')];
+  list.forEach(p => {
+    const i = p.inputs, o = MMM.compute(toCompute(i));
+    const r2 = x => Number.isFinite(x) ? MMM.roundHalf(x, 2).toFixed(2) : '';
+    const r1 = x => Number.isFinite(x) ? MMM.roundHalf(x * 100, 1).toFixed(1) : '';
+    rows.push([p.name, p.saved, MMM.STRATS[i.strat].long, i.ticker, i.start, i.price, i.target, i.iv, i.basis, i.emFactor, i.strike, i.premium, i.contracts, i.ccBasis, i.expiry,
+      i.tpMode, i.tpVal, i.slMode, i.slVal, i.earnings, i.earnTime, i.todayDate, i.todayPrice, i.ivNow, i.mark, i.bid, i.ask, i.last,
+      o.ok ? o.calDays : '', o.ok ? o.tdays : '', r2(o.emT), r2(o.hiT), r2(o.loT), r2(o.kMult), r1(o.pItm), r1(o.pTouch),
+      Number.isFinite(o.reachDate) ? MMM.iso(o.reachDate) : '', r2(o.be), r1(o.pProfit), r2(o.plUsd)].map(q).join(','));
+  });
+  const blob = new Blob([rows.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'FOCUS_MMM_Plays_' + stamp() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+// ---------- PDF report (white, light-grey section bars, no colour fills, Latin-1 text only) ----------
+function L1(s) {
+  return String(s).replace(/ /g, ' ').replace(/[→]/g, '->').replace(/[–—−]/g, '-').replace(/≥/g, '>=').replace(/≤/g, '<=')
+    .replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...').replace(/[^\x00-\xff]/g, '');
+}
+function pdfReport() {
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('The PDF library did not load - check the internet connection and reload.'); return; }
+  const { inp, o } = last;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const NAVY = [0, 43, 92], GREY = [68, 68, 68], LIGHT = [240, 240, 240], MID = [190, 190, 190], BLACK = [0, 0, 0];
+  const st = MMM.STRATS[strat];
+  const subtitle = (inp.ticker || 'no ticker') + ' ' + st.long + (o.ok && o.K > 0 ? ' ' + inp.strike + (st.isPut ? 'P' : 'C') : '') +
+    (o.ok ? ' ' + MMM.mdy(o.s) + ' to ' + MMM.mdy(o.t) : '') + (o.prem > 0 ? ' x' + o.C + ' @ ' + MMM.P(o.prem) : '');
+  const nowTxt = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
+  const rowsCount = o.banners.length;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...NAVY);
+  doc.text(L1('F.O.C.U.S.© MMM - Options Cone Simulator'), 12, 16);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...GREY);
+  const by = doc.splitTextToSize(L1('Jachbit 2026 · ' + nowTxt + ' · ' + rowsCount + ' rows · ' + subtitle), W - 24);
+  doc.text(by, 12, 22);
+  let y = 22 + by.length * 4;
+  doc.setDrawColor(...MID); doc.setLineWidth(0.4); doc.line(12, y, W - 12, y);
+  y += 3;
+
+  // cone image (white theme)
+  if (o.ok) {
+    const cv = document.createElement('canvas');
+    drawCone(cv, o, 'pdf', 960, 430);
+    const imgW = W - 24, imgH = imgW * 430 / 960;
+    doc.addImage(cv.toDataURL('image/png'), 'PNG', 12, y, imgW, imgH);
+    y += imgH + 4;
+  }
+
+  const body = [];
+  const secRow = t => body.push([{ content: L1(t), colSpan: 2, styles: { fillColor: LIGHT, textColor: NAVY, fontStyle: 'bold', fontSize: 9.5 }, _sec: true }]);
+  // inputs
+  secRow('Play inputs');
+  const kv = [['Strategy', st.long], ['Ticker', inp.ticker], ['Start', inp.start + '  price ' + inp.price], ['Target', inp.target], ['IV %', inp.iv],
+    ['Day basis', MMM.BASES[inp.basis].label], ['Strike', inp.strike], ['Premium / share', inp.premium], ['Contracts', inp.contracts || '1']];
+  if (strat === 'cc') kv.push(['CC cost basis', inp.ccBasis || 'start price']);
+  if (st.buy && inp.expiry) kv.push(['Option expiry', inp.expiry]);
+  if (inp.tpVal) kv.push(['Take profit', inp.tpVal + (inp.tpMode === 'usd' ? ' $' : ' %')]);
+  if (st.buy && inp.slVal) kv.push(['Stop loss', inp.slVal + (inp.slMode === 'usd' ? ' $' : ' %')]);
+  if (inp.earnings) kv.push(['Earnings', inp.earnings + (inp.earnTime ? ' ' + inp.earnTime.toUpperCase() : '')]);
+  if (inp.todayDate || inp.todayPrice) kv.push(['Today', (inp.todayDate || 'today') + (inp.todayPrice ? '  price ' + inp.todayPrice : '')]);
+  const q = ['mark', 'bid', 'ask', 'last'].filter(k => inp[k]).map(k => k + ' ' + inp[k]).join('  ');
+  if (q) kv.push(['Option quotes', q]);
+  kv.forEach(([k, v]) => body.push([L1(k), L1(v || '-')]));
+  // banners by section
+  const bySec = {};
+  o.banners.forEach(b => { (bySec[b.sec] = bySec[b.sec] || []).push(b); });
+  SEC_ORDER.forEach(sec => {
+    if (!bySec[sec]) return;
+    secRow(sec);
+    bySec[sec].forEach(b => body.push([{ content: L1(b.head), styles: { fontStyle: 'bold', textColor: BLACK } }, L1(b.math.join('\n'))]));
+  });
+
+  doc.autoTable({
+    startY: y,
+    head: [['Result', 'Worked math (live values)']],
+    body: body,
+    margin: { left: 12, right: 12, top: 14, bottom: 26 },
+    theme: 'grid',
+    styles: { font: 'helvetica', fontSize: 8.5, textColor: [34, 34, 34], cellPadding: 1.8, lineColor: [215, 215, 215], lineWidth: 0.1, overflow: 'linebreak', valign: 'top' },
+    headStyles: { fillColor: LIGHT, textColor: NAVY, fontStyle: 'bold', fontSize: 9, lineColor: MID },
+    alternateRowStyles: { fillColor: [252, 252, 252] },
+    columnStyles: { 0: { cellWidth: 74 }, 1: { cellWidth: 'auto' } },
+    didDrawCell: function (d) {
+      if (d.section === 'body' && d.cell.raw && d.cell.raw._sec) {
+        doc.setFillColor(...NAVY);
+        doc.rect(d.cell.x, d.cell.y, 1.2, d.cell.height, 'F');            // accent left bar (thin rule, not a band)
+        doc.setDrawColor(...NAVY); doc.setLineWidth(0.4);
+        doc.line(d.cell.x, d.cell.y + d.cell.height, d.cell.x + d.cell.width, d.cell.y + d.cell.height);
+      }
+    },
+    didDrawPage: function () {
+      const pg = doc.internal.getCurrentPageInfo().pageNumber;
+      doc.setDrawColor(...MID); doc.setLineWidth(0.3); doc.line(12, H - 20, W - 12, H - 20);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...GREY);
+      doc.text(L1('F.O.C.U.S.©  |  Jachbit 2026  |  MMM - Options Cone Simulator  |  ' + subtitle), W / 2, H - 15.5, { align: 'center', maxWidth: W - 40 });
+      doc.setTextColor(...NAVY); doc.text('Page ' + pg, W - 12, H - 15.5, { align: 'right' });
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...BLACK);
+      doc.text('John 3:16   |   1 John 3:16   |   Matt 6:33   |   Jer 33:3   |   Prov 3:5-6   |   Prov 27:17', W / 2, H - 11, { align: 'center' });
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(...GREY);
+      doc.text(L1('© 2026 Jachbit. All rights reserved. May not be copied or shared without express written consent of the publisher.  linktr.ee/jachbit'), W / 2, H - 7, { align: 'center' });
+    }
+  });
+  const fn = 'FOCUS_MMM_' + (inp.ticker || 'PLAY').replace(/[^A-Z0-9]/g, '') + '_' + st.name + '_' + stamp() + '.pdf';
+  doc.save(fn);
+}
+
+// ---------- header clock + GoatCounter (public Pages URL only) ----------
+function tick() {
+  const d = new Date();
+  $('hdrClock').textContent = d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false });
+  $('hdrDate').textContent = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+function goat() {
+  if (location.hostname !== 'jachbit.github.io') return;
+  const s = document.createElement('script');
+  s.async = true; s.src = '//gc.zgo.at/count.js';
+  s.setAttribute('data-goatcounter', 'https://jachbit-fftp.goatcounter.com/count');
+  document.head.appendChild(s);
+  $('visitorsWrap').style.display = 'block';
+  fetch('https://jachbit-fftp.goatcounter.com/counter/' + encodeURIComponent(location.pathname) + '.json')
+    .then(r => r.json()).then(d => { if (d && d.count) $('visitorCount').textContent = d.count; }).catch(() => {});
+}
+
+// ---------- wire up ----------
+document.querySelectorAll('#stratBtns button').forEach(b => b.addEventListener('click', () => setStrat(b.dataset.s)));
+FIELDS.forEach(f => { $(f).addEventListener('input', update); $(f).addEventListener('change', update); });
+$('btnPrice').addEventListener('click', getPrice);
+$('ticker').addEventListener('keydown', e => { if (e.key === 'Enter') getPrice(); });
+$('btnSave').addEventListener('click', savePlay);
+$('btnCsv').addEventListener('click', exportCsv);
+$('btnPdf').addEventListener('click', pdfReport);
+$('btnClearLive').addEventListener('click', () => { ['todayDate', 'todayPrice', 'ivNow', 'mark', 'bid', 'ask', 'last'].forEach(f => { $(f).value = ''; }); update(); });
+$('exampleSel').addEventListener('change', e => { const ex = EXAMPLES[e.target.value]; if (ex) { writeInputs(Object.assign({}, ex)); update(); } e.target.value = ''; });
+$('plays').addEventListener('click', e => {
+  const plays = lsGet(LS_PLAYS, []);
+  const li = e.target.getAttribute('data-load'), di = e.target.getAttribute('data-del');
+  if (li !== null) { writeInputs(plays[+li].inputs); update(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (di !== null && confirm('Delete the saved play "' + plays[+di].name + '"? This cannot be undone.')) { plays.splice(+di, 1); lsSet(LS_PLAYS, plays); renderPlays(); }
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => last && drawCone($('cone'), last.o, 'dark'), 120); });
+
+tick(); setInterval(tick, 1000);
+writeInputs(lsGet(LS_CUR, null) || EXAMPLES.nvda_csp);
+update();
+renderPlays();
+goat();
+</script>
+</body>
+</html>
