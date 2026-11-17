@@ -57,7 +57,9 @@ earnings without touching the start price.
 ## Files
 - `index.html` - the page (layout, cone chart, saved plays, CSV, PDF)
 - `mmm-math.js` - all the math and banner text (runs in the browser and in Node for testing)
+- `FOCUS-MMM-WEB_User_Guide.pdf` - the user guide the page's **User Guide (PDF)** button opens.
 - `generate_web_guide.py` (kept on the PC, not in this repo) - user guide PDF: `python generate_web_guide.py` -> `FOCUS_MMM_WEB_Guide_YYYYMMDD_HHMMSS.pdf`
+  and refreshes `FOCUS-MMM-WEB_User_Guide.pdf` (push that file to update the button's guide)
   (12 pages: the screen, every input, the cone, every banner group, four worked examples with cone charts, saved plays / CSV / PDF,
   troubleshooting). Its numbers come from `mmm-math.js` run in Node, so they are exactly what the page shows. Needs reportlab + Node.
 - `cf-worker-mmm.js` - the page's own Cloudflare worker (`mmm-proxy`): Yahoo chart, Nasdaq earnings date, Nasdaq option chain; nothing else is
