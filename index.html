@@ -89,6 +89,23 @@ input[type=date] { color-scheme: dark; }
 .sec-note { font-size: 13px; font-weight: 700; color: var(--bluegrey); margin: -4px 0 8px; }
 .hide { display: none !important; }
 
+/* big P/L card */
+.plcard { border: 2px solid var(--orange); }
+.pl-label { font-size: 15px; font-weight: 700; color: var(--white); letter-spacing: .5px; }
+.pl-big { font-size: 46px; font-weight: 700; line-height: 1.1; margin: 2px 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pl-pct { font-size: 18px; font-weight: 700; }
+.pl-math, .pl-days { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 3px; overflow-wrap: anywhere; }
+.pl-days { color: var(--yellow); }
+.pl-msg { font-size: 16px; font-weight: 700; color: var(--yellow); margin-top: 4px; }
+.pl-rows { margin-top: 8px; }
+.pl-row { border-top: 1px solid var(--border); padding: 6px 0; overflow-wrap: anywhere; }
+.pl-row .lv { font-size: 16px; font-weight: 700; }
+.pl-row .lv b { color: var(--white); }
+.pl-row .lm { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 2px; }
+.pl-row.strong .lv { font-size: 19px; }
+.pl-sub { font-size: 14px; font-weight: 700; color: var(--orange-hi); text-transform: uppercase; letter-spacing: .5px; margin-top: 10px; }
+#priceStatus div { margin-top: 2px; }
+
 /* chart */
 .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
 .chart-wrap h2 { font-size: 16px; color: var(--orange-hi); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin: 2px 4px 8px; }
@@ -175,6 +192,53 @@ footer a { color: var(--orange-hi); font-weight: 700; text-decoration: none; }
 
 <div class="main">
   <div>
+    <div class="panel plcard" id="plCard">
+      <h2>P/L monitor</h2>
+      <div class="pl-label" id="plLabel">RUNNING P/L</div>
+      <div class="pl-big" id="plBig">&mdash;</div>
+      <div class="pl-pct" id="plPct"></div>
+      <div class="pl-math" id="plMath"></div>
+      <div class="pl-days" id="plDays"></div>
+      <div class="pl-rows" id="plRows"></div>
+      <div id="plStatus" style="font-size:13px;font-weight:700;color:var(--yellow);margin-top:6px;"></div>
+      <div class="row" style="margin:10px 0 8px;flex-wrap:wrap;">
+        <button class="btn orange" id="btnQuotes" type="button">Get prices now</button>
+        <button class="btn" id="btnClearLive" type="button">Clear today / quotes</button>
+      </div>
+      <div class="sec-note">Price used: mark; else (bid + ask) / 2 when both are above 0; else the last trade. NOW banners show while today is after the start and before the target.</div>
+      <div class="grid2">
+        <div class="fld">
+          <label for="todayPrice">Today's stock price</label>
+          <input id="todayPrice" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="todayDate">Today's date</label>
+          <input id="todayDate" type="date">
+          <div class="hint">blank = today (ET)</div>
+        </div>
+        <div class="fld">
+          <label for="mark">Option mark</label>
+          <input id="mark" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="last">Option last</label>
+          <input id="last" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="bid">Option bid</label>
+          <input id="bid" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="ask">Option ask</label>
+          <input id="ask" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="ivNow">IV now %</label>
+          <input id="ivNow" inputmode="decimal" placeholder="blank = IV below">
+        </div>
+      </div>
+    </div>
+
     <div class="panel">
       <h2>Stock &amp; dates</h2>
       <div class="grid2">
@@ -260,50 +324,11 @@ footer a { color: var(--orange-hi); font-weight: 700; text-decoration: none; }
         <div class="fld">
           <label for="earnings">Earnings date</label>
           <input id="earnings" type="date">
+          <div class="hint">filled by Get price when announced</div>
         </div>
         <div class="fld">
           <label for="earnTime">Earnings time</label>
           <select id="earnTime"><option value="">not known</option><option value="bmo">before open</option><option value="amc">after close</option></select>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Today / live P/L (optional)</h2>
-      <div class="sec-note">NOW banners show while today is after the start and before the target. P/L uses the mark; else (bid + ask) / 2 when both are above 0; else the last trade.</div>
-      <div class="grid2">
-        <div class="fld">
-          <label for="todayDate">Today's date</label>
-          <input id="todayDate" type="date">
-          <div class="hint">blank = today (ET)</div>
-        </div>
-        <div class="fld">
-          <label for="todayPrice">Today's stock price</label>
-          <input id="todayPrice" inputmode="decimal">
-        </div>
-        <div class="fld">
-          <label for="ivNow">IV now %</label>
-          <input id="ivNow" inputmode="decimal" placeholder="blank = IV above">
-        </div>
-        <div class="fld">
-          <label for="mark">Option mark</label>
-          <input id="mark" inputmode="decimal">
-        </div>
-        <div class="fld">
-          <label for="bid">Option bid</label>
-          <input id="bid" inputmode="decimal">
-        </div>
-        <div class="fld">
-          <label for="ask">Option ask</label>
-          <input id="ask" inputmode="decimal">
-        </div>
-        <div class="fld">
-          <label for="last">Option last</label>
-          <input id="last" inputmode="decimal">
-        </div>
-        <div class="fld">
-          <label>&nbsp;</label>
-          <button class="btn" id="btnClearLive" type="button">Clear today / P/L</button>
         </div>
       </div>
     </div>
@@ -355,7 +380,7 @@ let last = null;
 
 const EXAMPLES = {
   nvda_csp: { strat: 'csp', ticker: 'NVDA', price: '168.89', iv: '59.7', start: '2026-11-10', target: '2026-12-24', basis: 'cal365', strike: '150', premium: '6.3233', contracts: '1', tpMode: 'pct', tpVal: '50', todayDate: '2026-11-10' },
-  nvda_cc: { strat: 'cc', ticker: 'NVDA', price: '168.89', iv: '59.7', start: '2026-11-10', target: '2026-12-24', basis: 'cal365', strike: '200', premium: '3.50', contracts: '1', ccBasis: '198.75', tpMode: 'pct', tpVal: '50', todayDate: '2026-11-12', todayPrice: '166.19' },
+  nvda_cc: { strat: 'cc', ticker: 'NVDA', price: '168.89', iv: '59.7', start: '2026-11-10', target: '2026-12-24', basis: 'cal365', strike: '200', premium: '3.50', contracts: '1', ccBasis: '198.75', tpMode: 'pct', tpVal: '50', todayDate: '2026-11-12', todayPrice: '166.19', last: '2.95' },
   goog_bc: { strat: 'bc', ticker: 'GOOG', price: '281.26', iv: '36.4', start: '2026-11-16', target: '2027-01-15', basis: 'cal365', strike: '280', premium: '18.50', contracts: '1', tpMode: 'pct', tpVal: '50', slMode: 'pct', slVal: '50', todayDate: '2026-11-16', mark: '17.45', bid: '16.90' }
 };
 
@@ -417,8 +442,28 @@ function update() {
     });
   });
   $('banners').innerHTML = h;
+  renderPL(o);
   $('chartTitle').textContent = 'Expected-move cone' + (inp.ticker ? ' - ' + inp.ticker : '') + ' ' + MMM.STRATS[strat].long + (o.ok && o.K > 0 ? ' ' + MMM.P(o.K) : '');
   drawCone($('cone'), o, 'dark');
+}
+
+// ---------- big P/L card ----------
+function renderPL(o) {
+  const pl = o.pl || { rows: [] };
+  const big = $('plBig');
+  $('plLabel').textContent = pl.bigLabel || 'RUNNING P/L';
+  big.textContent = pl.on ? pl.big : '—';
+  big.className = 'pl-big c-' + (pl.on ? pl.cls : 'white');
+  $('plPct').textContent = pl.on ? pl.pct : '';
+  $('plPct').className = 'pl-pct c-' + (pl.on ? pl.cls : 'white');
+  $('plMath').textContent = pl.on ? '= ' + pl.bigMath : '';
+  $('plDays').textContent = pl.days || '';
+  let h = pl.msg && !pl.on ? '<div class="pl-msg">' + esc(pl.msg) + '</div>' : '';
+  const row = r => '<div class="pl-row' + (r.strong ? ' strong' : '') + '"><div class="lv"><b>' + esc(r.label) + ':</b> <span class="c-' + r.cls + '">' + esc(r.value) + '</span></div>' +
+    '<div class="lm">' + esc(r.math) + '</div></div>';
+  if (pl.on && pl.cc) h += '<div class="pl-sub">Covered call - stock + call</div>' + pl.cc.map(row).join('') + '<div class="pl-sub">The call</div>';
+  h += (pl.rows || []).map(row).join('');
+  $('plRows').innerHTML = h;
 }
 
 // ---------- cone chart ----------
@@ -569,10 +614,20 @@ function niceStep(raw) {
 function fmtAxis(v, step) { return step >= 1 ? v.toFixed(0) : v.toFixed(step >= 0.1 ? 1 : 2); }
 
 // ---------- Yahoo price (browser-side v8 chart API, same method as FOCUS Stocks Banner) ----------
+// MMM's own Cloudflare worker (cf-worker-mmm.js): Yahoo chart + Nasdaq earnings date + Nasdaq option chain
+const MMM_PROXY = 'https://mmm-proxy.jachcomm.workers.dev';
+async function getJson(url, ms) {
+  const ctrl = new AbortController();
+  const tm = setTimeout(() => ctrl.abort(), ms || 8000);
+  try {
+    const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+    return r.ok ? await r.json() : null;
+  } catch (e) { return null; } finally { clearTimeout(tm); }
+}
 async function yahooChart(sym, query) {
-  const path = '/v8/finance/chart/' + encodeURIComponent(sym) + '?' + query;
-  const urls = ['https://fsb-proxy.jachcomm.workers.dev' + path,
-    'https://corsproxy.io/?url=' + encodeURIComponent('https://query1.finance.yahoo.com' + path)];
+  // own worker first; the FOCUS Stocks Banner worker as the fallback
+  const urls = [MMM_PROXY + '/chart/' + encodeURIComponent(sym) + '?' + query,
+    'https://fsb-proxy.jachcomm.workers.dev/v8/finance/chart/' + encodeURIComponent(sym) + '?' + query];
   for (const url of urls) {
     try {
       const ctrl = new AbortController();
@@ -589,31 +644,87 @@ async function yahooChart(sym, query) {
 function etDate(sec) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(sec * 1000));
 }
-async function getPrice() {
-  const sym = $('ticker').value.trim().toUpperCase();
-  if (!sym) { $('priceStatus').textContent = 'Type a ticker first.'; return; }
-  $('priceStatus').textContent = 'Getting ' + sym + ' from Yahoo...';
-  const res = await yahooChart(sym, 'interval=1d&range=6mo');
-  if (!res) { $('priceStatus').textContent = 'No price from Yahoo for ' + sym + ' - type the price in.'; return; }
-  const m = res.meta;
-  const live = m.regularMarketPrice;
-  const today = MMM.iso(MMM.todayET());
-  const start = $('start').value;
-  let msg = sym + ' ' + MMM.P(live) + ' (Yahoo, ' + (m.regularMarketTime ? new Date(m.regularMarketTime * 1000).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET' : 'latest') + ')';
-  if (!start || start >= today) {
-    $('price').value = MMM.P(live);
-    if (!start) $('start').value = today;
-    msg += ' -> start price';
-  } else {
-    const ts = res.timestamp || [], cl = (res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close) || [];
-    let found = NaN;
-    for (let i = 0; i < ts.length; i++) if (etDate(ts[i]) === start && Number.isFinite(cl[i])) found = cl[i];
-    if (Number.isFinite(found)) { $('price').value = MMM.P(MMM.roundHalf(found, 2)); msg += ';  close on ' + start + ' ' + MMM.P(MMM.roundHalf(found, 2)) + ' -> start price'; }
-    else msg += ';  no Yahoo close for ' + start + ' (not a trading day?) - start price left as is';
-    $('todayPrice').value = MMM.P(live);
-    msg += ';  ' + MMM.P(live) + ' -> today\'s price';
+function setStatus(lines) {
+  const h = lines.map(l => '<div>' + esc(l) + '</div>').join('');
+  $('priceStatus').innerHTML = h;
+  $('plStatus').innerHTML = h;
+}
+const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+// Nasdaq (Zacks) next earnings date: "Earnings announcement* for NVDA: Nov 17, 2026"
+async function getEarnings(sym) {
+  const j = await getJson(MMM_PROXY + '/earnings/' + encodeURIComponent(sym));
+  if (!j || !j.data) return { err: 'earnings: no answer from the data worker - type the date if you know it' };
+  const m = /([A-Z][a-z]{2})\w*\s+(\d{1,2}),\s*(\d{4})/.exec(j.data.announcement || '');
+  if (!m || !MONTHS[m[1]]) return { err: 'earnings: ' + sym + ' has no announced date yet (Nasdaq / Zacks) - type it if you know it' };
+  const txt = (j.data.reportText || '').toLowerCase();
+  return { date: m[3] + '-' + String(MONTHS[m[1]]).padStart(2, '0') + '-' + m[2].padStart(2, '0'),
+    time: txt.includes('after market close') ? 'amc' : txt.includes('before market open') ? 'bmo' : '' };
+}
+// Nasdaq option chain for the target date: last / bid / ask of the strike (Nasdaq gives no mark)
+async function getOptionQuote(sym, date, strike, isPut) {
+  const n = v => { const x = parseFloat(String(v == null ? '' : v).replace(/,/g, '')); return Number.isFinite(x) && x > 0 ? x : NaN; };
+  for (const cls of ['stocks', 'etf']) {
+    const j = await getJson(MMM_PROXY + '/options/' + encodeURIComponent(sym) + '?date=' + date + (cls === 'etf' ? '&class=etf' : ''));
+    const rows = j && j.data && j.data.table && j.data.table.rows;
+    if (!rows || !rows.length) continue;
+    const r = rows.find(x => x.strike && Math.abs(parseFloat(x.strike) - strike) < 0.001);
+    if (!r) return { err: 'option quotes: no ' + date + ' ' + MMM.P(strike) + (isPut ? ' put' : ' call') + ' in the Nasdaq chain - check the strike / expiry, or type the quotes' };
+    const k = isPut ? 'p_' : 'c_';
+    return { last: n(r[k + 'Last']), bid: n(r[k + 'Bid']), ask: n(r[k + 'Ask']) };
   }
-  $('priceStatus').textContent = msg;
+  return { err: 'option quotes: no ' + date + ' expiry from Nasdaq (expiry not listed, or the data worker did not answer) - type the quotes' };
+}
+const fmtQ = x => Number.isFinite(x) ? MMM.P(x) : '';
+// full = the ticker button (also sets the start price); monitor = the P/L card button (today's price, quotes, earnings only)
+async function getPrice(mode) {
+  const sym = $('ticker').value.trim().toUpperCase();
+  if (!sym) { setStatus(['Type a ticker first.']); return; }
+  setStatus(['Getting ' + sym + ' prices...']);
+  const today = MMM.iso(MMM.todayET());
+  const start = $('start').value, target = $('target').value;
+  const strike = MMM.num($('strike').value);
+  const st = MMM.STRATS[strat];
+  const [res, earn, q] = await Promise.all([
+    yahooChart(sym, 'interval=1d&range=6mo'),
+    getEarnings(sym),
+    strike > 0 && target >= today ? getOptionQuote(sym, target, strike, st.isPut) : Promise.resolve(null)
+  ]);
+  const msg = [];
+  if (!res) msg.push('No stock price from Yahoo for ' + sym + ' - type the price in.');
+  else {
+    const m = res.meta, live = m.regularMarketPrice;
+    msg.push(sym + ' ' + MMM.P(live) + ' (Yahoo, ' + (m.regularMarketTime ? new Date(m.regularMarketTime * 1000).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET' : 'latest') + ')');
+    if (mode !== 'monitor' && (!start || start >= today)) {
+      $('price').value = MMM.P(live);
+      if (!start) $('start').value = today;
+      msg.push('-> start price');
+    } else {
+      if (mode !== 'monitor') {
+        const ts = res.timestamp || [], cl = (res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close) || [];
+        let found = NaN;
+        for (let i = 0; i < ts.length; i++) if (etDate(ts[i]) === start && Number.isFinite(cl[i])) found = cl[i];
+        if (Number.isFinite(found)) { $('price').value = MMM.P(MMM.roundHalf(found, 2)); msg.push('close on ' + start + ' ' + MMM.P(MMM.roundHalf(found, 2)) + ' -> start price'); }
+        else msg.push('no Yahoo close for ' + start + ' (not a trading day?) - start price left as is');
+      }
+      $('todayPrice').value = MMM.P(live);
+      $('todayDate').value = '';
+      msg.push(MMM.P(live) + ' -> today\'s price');
+    }
+  }
+  if (earn.err) msg.push(earn.err);
+  else {
+    $('earnings').value = earn.date; $('earnTime').value = earn.time;
+    msg.push('earnings ' + earn.date + (earn.time === 'amc' ? ' after close' : earn.time === 'bmo' ? ' before open' : '') + ' (Nasdaq / Zacks, expected)');
+  }
+  if (!(strike > 0)) msg.push('option quotes: type the strike first');
+  else if (target < today) msg.push('option quotes: the target date has passed');
+  else if (q && q.err) msg.push(q.err);
+  else if (q) {
+    $('mark').value = ''; $('bid').value = fmtQ(q.bid); $('ask').value = fmtQ(q.ask); $('last').value = fmtQ(q.last);
+    msg.push('option ' + MMM.P(strike) + (st.isPut ? 'P ' : 'C ') + target + ': bid ' + (fmtQ(q.bid) || 'n/a') + '  ask ' + (fmtQ(q.ask) || 'n/a') + '  last ' + (fmtQ(q.last) || 'n/a') +
+      ' (Nasdaq, delayed; no mark, so P/L uses (bid + ask) / 2)' + (q.bid > q.ask ? ' - bid above ask: stale quote, check the chain' : ''));
+  }
+  setStatus(msg);
   update();
 }
 
@@ -652,7 +763,7 @@ function exportCsv() {
   const list = plays.length ? plays : [{ name: playName(readInputs()) + ' (current)', saved: '', inputs: readInputs() }];
   const head = ['Name', 'Saved', 'Strategy', 'Ticker', 'Start', 'Start Price', 'Target', 'IV %', 'Day Basis', 'EM Factor', 'Strike', 'Premium', 'Contracts', 'CC Cost Basis', 'Option Expiry',
     'TP Mode', 'TP', 'SL Mode', 'SL', 'Earnings', 'Earnings Time', 'Today', 'Today Price', 'IV Now %', 'Mark', 'Bid', 'Ask', 'Last',
-    'DTE', 'Trading Days', 'EM', 'EM High', 'EM Low', 'Strike x EM', 'Chance ITM %', 'Touch %', 'Reach Date', 'Break-even', 'Chance of Profit %', 'Live P/L $'];
+    'DTE', 'Trading Days', 'EM', 'EM High', 'EM Low', 'Strike x EM', 'Chance ITM %', 'Touch %', 'Reach Date', 'Break-even', 'Chance of Profit %', 'Live P/L $', 'CC Stock P/L $', 'CC Total P/L $'];
   const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const rows = [head.join(',')];
   list.forEach(p => {
@@ -662,7 +773,7 @@ function exportCsv() {
     rows.push([p.name, p.saved, MMM.STRATS[i.strat].long, i.ticker, i.start, i.price, i.target, i.iv, i.basis, i.emFactor, i.strike, i.premium, i.contracts, i.ccBasis, i.expiry,
       i.tpMode, i.tpVal, i.slMode, i.slVal, i.earnings, i.earnTime, i.todayDate, i.todayPrice, i.ivNow, i.mark, i.bid, i.ask, i.last,
       o.ok ? o.calDays : '', o.ok ? o.tdays : '', r2(o.emT), r2(o.hiT), r2(o.loT), r2(o.kMult), r1(o.pItm), r1(o.pTouch),
-      Number.isFinite(o.reachDate) ? MMM.iso(o.reachDate) : '', r2(o.be), r1(o.pProfit), r2(o.plUsd)].map(q).join(','));
+      Number.isFinite(o.reachDate) ? MMM.iso(o.reachDate) : '', r2(o.be), r1(o.pProfit), r2(o.plUsd), r2(o.stockPlUsd), r2(o.ccTotal)].map(q).join(','));
   });
   const blob = new Blob([rows.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
@@ -786,8 +897,9 @@ function goat() {
 // ---------- wire up ----------
 document.querySelectorAll('#stratBtns button').forEach(b => b.addEventListener('click', () => setStrat(b.dataset.s)));
 FIELDS.forEach(f => { $(f).addEventListener('input', update); $(f).addEventListener('change', update); });
-$('btnPrice').addEventListener('click', getPrice);
-$('ticker').addEventListener('keydown', e => { if (e.key === 'Enter') getPrice(); });
+$('btnPrice').addEventListener('click', () => getPrice('full'));
+$('btnQuotes').addEventListener('click', () => getPrice('monitor'));
+$('ticker').addEventListener('keydown', e => { if (e.key === 'Enter') getPrice('full'); });
 $('btnSave').addEventListener('click', savePlay);
 $('btnCsv').addEventListener('click', exportCsv);
 $('btnPdf').addEventListener('click', pdfReport);

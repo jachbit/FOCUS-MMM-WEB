@@ -6,4 +6,5 @@
 - Before edits: run `backup_all.bat`. Local preview: `start.bat` (port 8136, PORT_REGISTRY.md).
 - Rules kept here: every banner wraps (never cut off); every number shows its math; calendar DTE / 365 default; never a mid price when bid or ask is 0; NaN checks with Number.isFinite, never a bare comparison; min 12px, no dim text; jsPDF text Latin-1 only (`L1()`).
 - GoatCounter loads only on jachbit.github.io (shared free account jachbit-fftp).
-- Yahoo price: browser-side v8 chart API via the FOCUS Stocks Banner Cloudflare worker (`fsb-proxy`), corsproxy.io as fallback.
+- Data: own Cloudflare worker `cf-worker-mmm.js` (deployed by the user as mmm-proxy.jachcomm.workers.dev, `MMM_PROXY` in index.html): /chart (Yahoo v8), /earnings (Nasdaq/Zacks), /options (Nasdaq chain, last/bid/ask, no mark). Yahoo quote/quoteSummary/options need a crumb (refused); corsproxy.io now needs a key - do not use. Stock-price fallback: the FSB worker `fsb-proxy`.
+- P/L monitor card = `o.pl` from mmm-math.js (big number, rows with math; CC rows in `pl.cc`, also added as Live P/L banners for the PDF).

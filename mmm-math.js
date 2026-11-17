@@ -469,6 +469,16 @@
     const mark = num(raw.mark), bid = num(raw.bid), ask = num(raw.ask), last = num(raw.last);
     const markOk = mark > 0, bidOk = bid > 0, askOk = ask > 0, lastOk = last > 0;
     const anyQ = markOk || bidOk || askOk || lastOk;
+    // summary for the big P/L card on the page (rows carry their own math)
+    const pl = { on: false, rows: [], bigLabel: buy ? 'RUNNING P/L (option)' : 'RUNNING P/L (premium kept)' };
+    out.pl = pl;
+    if (hasStrike && Number.isFinite(t)) {
+      const left = t - today;
+      pl.days = left > 0 ? left + ' days (' + tradingDays(today, t) + ' trading days) left to ' + md(t) : (left === 0 ? 'expires today ' + md(t) : 'expired ' + md(t));
+    }
+    if (!hasPrem) pl.msg = 'Type the strike and the premium to see the P/L.';
+    else if (!anyQ) pl.msg = 'Type the option\'s mark, bid / ask or last (or press Get price) to see the P/L.';
+    else if (!(markOk || (bidOk && askOk) || lastOk)) pl.msg = 'No usable option price: a mid needs both bid and ask above 0.';
     if (anyQ && hasPrem) {
       // price used: mark; else (bid + ask) / 2 when both are above 0; else the last trade. Never a mid when bid or ask is 0.
       const src = markOk ? 'mark' : (bidOk && askOk) ? 'mid' : lastOk ? 'last' : '';
@@ -486,14 +496,48 @@
           if (askOk) lines.push('close now at ask ' + P(ask) + ': (' + P(prem) + ' - ' + P(ask) + ') x 100 x ' + C + ' = ' + SD((prem - ask) * 100 * C));
           if (hasTp) lines.push('TP buy back ' + R3(tpBuyBack) + ': ' + (oPx - tpBuyBack > 0 ? R3(oPx) + ' - ' + R3(tpBuyBack) + ' = ' + R3(oPx - tpBuyBack) + ' to go' : 'REACHED'));
           add('Live P/L', plUsd >= 0 ? 'up' : 'down', 'LIVE P/L ' + SD(plUsd) + ' = ' + R(plOfMax * 100, 1) + '% of max', lines);
+          pl.rows.push({ label: 'option ' + src + ' ' + R3(oPx), value: SD(plUsd) + ' = ' + R(plOfMax * 100, 1) + '% of max ' + D(prem * 100 * C), math: lines[0], cls: plUsd >= 0 ? 'up' : 'down' });
+          if (askOk) pl.rows.push({ label: 'close now at ask ' + P(ask), value: SD((prem - ask) * 100 * C), math: lines[1], cls: prem - ask >= 0 ? 'up' : 'down' });
+          if (hasTp) pl.rows.push({ label: 'take profit buy back ' + R3(tpBuyBack), value: oPx - tpBuyBack > 0 ? R3(oPx - tpBuyBack) + ' to go' : 'REACHED', math: lines[lines.length - 1], cls: oPx - tpBuyBack > 0 ? 'cyan' : 'up' });
+          Object.assign(pl, { on: true, big: SD(plUsd), pct: R(plOfMax * 100, 1) + '% of max profit', cls: plUsd >= 0 ? 'up' : 'down',
+            bigMath: '(' + P(prem) + ' sold - ' + R3(oPx) + ' ' + src + ') x 100 x ' + C });
           let ccTotal = NaN;
           if (!isPut) {
+            // covered call: stock + call together (part of the big P/L card)
             const stockNow = pNowIn > 0 ? pNowIn : S;
+            const stockTxt = P(stockNow) + (pNowIn > 0 ? ' today' : ' start price (type today\'s price)');
             const stockPl = (stockNow - basisC) * 100 * C;
+            const costUsd = basisC * 100 * C;
             ccTotal = stockPl + plUsd;
-            add('Live P/L', ccTotal >= 0 ? 'up' : 'down', 'CC TOTAL P/L ' + SD(ccTotal),
-              ['stock ' + P(stockNow) + (pNowIn > 0 ? ' (today)' : ' (start price - type today\'s price)') + ' - ' + P(basisC) + ' = ' + R(stockNow - basisC, 2) + ' x 100 x ' + C + ' = ' + SD(stockPl),
-                '+ call ' + SD(plUsd) + ' = ' + SD(ccTotal)]);
+            Object.assign(out, { ccTotal, stockPlUsd: stockPl });
+            const netBasis = basisC - prem;
+            const calledUsd = (K - basisC + prem) * 100 * C;
+            const otmUsd = prem * 100 * C + stockPl;
+            const capped = Math.max(0, stockNow - K) * 100 * C;
+            const cushion = prem / S;
+            const ccRows = [
+              { label: 'stock P/L', value: SD(stockPl) + ' (' + (stockPl >= 0 ? '+' : '') + R(stockPl / costUsd * 100, 1) + '%)',
+                math: '(' + stockTxt + ' - ' + P(basisC) + ' basis) x 100 x ' + C + ' = ' + SD(stockPl) + ';  ' + SD(stockPl) + ' / ' + D(costUsd) + ' stock cost', cls: stockPl >= 0 ? 'up' : 'down' },
+              { label: 'call P/L', value: SD(plUsd) + ' (' + R(plOfMax * 100, 1) + '% of the ' + D(prem * 100 * C) + ' premium kept)',
+                math: '(' + P(prem) + ' - ' + R3(oPx) + ') x 100 x ' + C + ' = ' + SD(plUsd), cls: plUsd >= 0 ? 'up' : 'down' },
+              { label: 'CC TOTAL P/L', value: SD(ccTotal) + ' (' + (ccTotal >= 0 ? '+' : '') + R(ccTotal / costUsd * 100, 2) + '% of ' + D(costUsd) + ')',
+                math: 'stock ' + SD(stockPl) + ' + call ' + SD(plUsd) + ' = ' + SD(ccTotal) + ';  / ' + D(costUsd) + ' = ' + R(ccTotal / costUsd * 100, 2) + '%', cls: ccTotal >= 0 ? 'up' : 'down', strong: true },
+              { label: 'cost after premium', value: P(roundHalf(netBasis, 2)) + (stockNow >= netBasis ? ' - stock ' + P(roundHalf(stockNow - netBasis, 2)) + ' above it' : ' - stock ' + P(roundHalf(netBasis - stockNow, 2)) + ' below it'),
+                math: P(basisC) + ' - ' + P(prem) + ' = ' + P(roundHalf(netBasis, 2)) + ';  ' + P(stockNow) + ' - ' + P(roundHalf(netBasis, 2)) + ' = ' + R(stockNow - netBasis, 2), cls: stockNow >= netBasis ? 'up' : 'down' },
+              { label: 'if called at ' + P(K) + ' on ' + md(t), value: SD(calledUsd) + ' = ' + SD(calledUsd - ccTotal) + ' vs now',
+                math: '(' + P(K) + ' - ' + P(basisC) + ' + ' + P(prem) + ') x 100 x ' + C + ' = ' + SD(calledUsd) + ';  ' + SD(calledUsd) + ' - ' + (ccTotal < 0 ? '(' + SD(ccTotal) + ')' : SD(ccTotal)) + ' now = ' + SD(calledUsd - ccTotal), cls: calledUsd >= 0 ? 'up' : 'down' },
+              { label: 'if not called (price stays ' + P(stockNow) + ')', value: SD(otmUsd),
+                math: 'keep the premium ' + D(prem * 100 * C) + ' + stock ' + SD(stockPl) + ' = ' + SD(otmUsd), cls: otmUsd >= 0 ? 'up' : 'down' },
+              { label: 'upside given up', value: capped > 0 ? '-' + D(capped) + ' above the strike' : 'none - stock below ' + P(K),
+                math: capped > 0 ? '(' + P(stockNow) + ' - ' + P(K) + ') x 100 x ' + C + ' = ' + D(capped) + ' you do not get if called' : 'gains above ' + P(K) + ' go to the call buyer; ' + P(stockNow) + ' is ' + P(roundHalf(K - stockNow, 2)) + ' below', cls: capped > 0 ? 'down' : 'white' },
+              { label: 'downside cushion', value: R(cushion * 100, 2) + '%', math: P(prem) + ' premium / ' + P(S) + ' start price = ' + R(cushion * 100, 2) + '% the stock can fall before the premium is used up', cls: 'white' }
+            ];
+            if (out.nowOn) ccRows.push({ label: 'odds now', value: 'called ~' + pct0(out.pItmNow) + ',  profit ~' + pct0(out.pProfitNow),
+              math: 'from the NOW banners: chance above ' + P(K) + ' and above break-even ' + P(roundHalf(be, 2)) + ' at ' + md(t), cls: 'now' });
+            ccRows.forEach(r => add('Live P/L', r.cls === 'now' ? 'now' : r.cls, r.label + ':  ' + r.value, [r.math]));
+            pl.cc = ccRows;
+            Object.assign(pl, { big: SD(ccTotal), pct: R(ccTotal / costUsd * 100, 2) + '% of the ' + D(costUsd) + ' stock cost', cls: ccTotal >= 0 ? 'up' : 'down',
+              bigLabel: 'CC TOTAL P/L (stock + call)', bigMath: 'stock ' + SD(stockPl) + ' + call ' + SD(plUsd) });
           }
           add('Live P/L', plUsd >= 0 ? 'up' : 'down', 'Running P/L   ' + SD(plUsd) + '   ' + R(plOfMax * 100, 2) + '%' + (!isPut ? '   |   CC total ' + SD(ccTotal) : ''), []);
         } else {
@@ -503,6 +547,13 @@
           if (hasTp) lines.push('TP ' + R3(tpPx) + ': ' + (tpPx - oPx > 0 ? R3(tpPx) + ' - ' + R3(oPx) + ' = ' + R3(tpPx - oPx) + ' to go' : 'REACHED'));
           if (hasSl) lines.push('SL ' + R3(slPx) + ': ' + (oPx - slPx > 0 ? R3(oPx) + ' - ' + R3(slPx) + ' = ' + R3(oPx - slPx) + ' above' : 'HIT'));
           add('Live P/L', plUsd >= 0 ? 'up' : 'down', 'LIVE P/L ' + SD(plUsd) + ' = ' + (plPct >= 0 ? '+' : '') + R(plPct * 100, 1) + '% of cost', lines);
+          pl.rows.push({ label: 'option ' + src + ' ' + R3(oPx), value: SD(plUsd) + ' = ' + (plPct >= 0 ? '+' : '') + R(plPct * 100, 1) + '% of cost ' + D(prem * 100 * C), math: lines[0], cls: plUsd >= 0 ? 'up' : 'down' });
+          let li = 1;
+          if (bidOk) pl.rows.push({ label: 'sell now at bid ' + P(bid), value: SD((bid - prem) * 100 * C), math: lines[li++], cls: bid - prem >= 0 ? 'up' : 'down' });
+          if (hasTp) pl.rows.push({ label: 'take profit ' + R3(tpPx), value: tpPx - oPx > 0 ? R3(tpPx - oPx) + ' to go' : 'REACHED', math: lines[li++], cls: tpPx - oPx > 0 ? 'cyan' : 'up' });
+          if (hasSl) pl.rows.push({ label: 'stop loss ' + R3(slPx), value: oPx - slPx > 0 ? R3(oPx - slPx) + ' above' : 'HIT', math: lines[li++], cls: oPx - slPx > 0 ? 'cyan' : 'down' });
+          Object.assign(pl, { on: true, big: SD(plUsd), pct: (plPct >= 0 ? '+' : '') + R(plPct * 100, 1) + '% of cost', cls: plUsd >= 0 ? 'up' : 'down',
+            bigMath: '(' + R3(oPx) + ' ' + src + ' - ' + P(prem) + ' paid) x 100 x ' + C });
           add('Live P/L', plUsd >= 0 ? 'up' : 'down', 'Running P/L   ' + SD(plUsd) + '   ' + (plPct >= 0 ? '+' : '') + R(plPct * 100, 2) + '%', []);
         }
       }

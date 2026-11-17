@@ -13,12 +13,19 @@ Source studies: `D:\ClaudeCodeProjects\FOCUS-MMM-TOS\`. The cone idea comes from
 
 ## Use it
 1. Pick the strategy (big buttons at the top).
-2. Ticker + **Get price (Yahoo)**: fills the start price (the close on the start date when the start is in the past) and today's price.
+2. Ticker + **Get price**: fills the start price (the close on the start date when the start is in the past), today's price, the next
+   **earnings date** (Nasdaq / Zacks, once the company has announced it) and the option's **bid / ask / last** for the strike and target date
+   (Nasdaq, delayed; no mark, so the P/L uses (bid + ask) / 2).
 3. Start date, expiry / target date, IV % (the expiry's IV from the option chain: tastytrade IVX or the TOS chain header).
 4. Strike, premium, contracts (CC: your stock cost basis; buys: an option expiry only if it is later than the target date).
 5. Optional: take profit / stop loss (% of premium or $ total), earnings date, today's date + price, the option's mark / bid / ask / last.
 6. **Save play** keeps it in this browser; **Export CSV** writes `FOCUS_MMM_Plays_YYYYMMDD_HHMMSS.csv`; **PDF report** writes
    `FOCUS_MMM_<TICKER>_<CSP|CC|BC|BP>_YYYYMMDD_HHMMSS.pdf` (white, with the cone and every banner's math).
+
+**P/L monitor** (top of the left column): the Running P/L in large type with its math, days left, close-now P/L, take profit to go / stop-loss room.
+For a Covered Call the big number is the **CC TOTAL (stock + call)** with stock P/L, call P/L, total % of the stock cost, cost after premium,
+if called, if not called, upside given up, downside cushion and the odds now. **Get prices now** in the card refreshes today's price, quotes and
+earnings without touching the start price.
 
 `~` means about. Chances are never negative.
 
@@ -50,6 +57,12 @@ Source studies: `D:\ClaudeCodeProjects\FOCUS-MMM-TOS\`. The cone idea comes from
 ## Files
 - `index.html` - the page (layout, cone chart, saved plays, CSV, PDF)
 - `mmm-math.js` - all the math and banner text (runs in the browser and in Node for testing)
+- `generate_web_guide.py` (kept on the PC, not in this repo) - user guide PDF: `python generate_web_guide.py` -> `FOCUS_MMM_WEB_Guide_YYYYMMDD_HHMMSS.pdf`
+  (12 pages: the screen, every input, the cone, every banner group, four worked examples with cone charts, saved plays / CSV / PDF,
+  troubleshooting). Its numbers come from `mmm-math.js` run in Node, so they are exactly what the page shows. Needs reportlab + Node.
+- `cf-worker-mmm.js` - the page's own Cloudflare worker (`mmm-proxy`): Yahoo chart, Nasdaq earnings date, Nasdaq option chain; nothing else is
+  forwarded. Deploy: dash.cloudflare.com > Workers & Pages > Create > Worker > name `mmm-proxy` > Deploy > Edit code > paste this file > Deploy.
+  Get price falls back to the FOCUS Stocks Banner worker for the stock price if `mmm-proxy` does not answer.
 - `start.bat` - local preview at http://localhost:8136
 - `backup_all.bat` - timestamped copies into `backups\` before each edit session
 
